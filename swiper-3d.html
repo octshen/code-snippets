@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+  <title></title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.2/css/swiper.css">
+  <style>
+    *{ 
+      padding: 0;
+      margin: 0;
+    }
+    html,body{ 
+      width: 100%;
+      height: 100%;
+    }
+    .swiper-container{
+      width: 100%;
+      margin: 20px auto; 
+      perspective: 1200px;
+    }
+    .swiper-wrapper {
+      transform-style: preserve-3d;
+    }
+    .swiper-slide{
+      width: 85%;
+      text-align: center; 
+    }
+    .swiper-slide img {
+      width: 90%;
+    }
+		</style>
+</head>
+
+<body>
+  <div class="swiper-container">
+    <div class="swiper-wrapper">
+      <div class="swiper-slide">
+        <img src="http://temp.im/200x150/000000/4B0082" />
+      </div>
+      <div class="swiper-slide">
+        <img src="http://temp.im/200x150/000000/D8BFD8 " />
+      </div>
+      <div class="swiper-slide">
+        <img src="http://temp.im/200x150/000000/f1f1f1 " />
+      </div>
+      <div class="swiper-slide">
+        <img src="http://temp.im/200x150/000000/FFA500" />
+      </div>
+      
+    </div>
+    <div class="swiper-pagination"></div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Swiper/4.0.2/js/swiper.js"></script>
+  <script type="text/javascript">
+    var swiper = new Swiper(".swiper-container", {
+      // autoplay: {
+      //   delay: 3000,
+      //   disableOnInteraction: false,
+      // },
+      speed: 500,
+      slidesPerView: 'auto',
+      loop: true,
+      centeredSlides: true,
+      watchSlidesProgress: true,
+      on: {
+        progress: function (p) {
+          for (var i = 0; i < this.slides.length; i++) {
+            var slide = this.slides[i];
+            //获取这个标量
+            var progress = slide.progress;
+            es = slide.style
+            es.opacity = 1 - Math.min(Math.abs(progress / 2), 1)
+            es.transform = es.webkitTransform = "translate3d(0,0," + (-Math.abs(progress * 100)) + "px)"
+          }
+        },
+        setTransition: function (duration) {
+          for (var i = 0; i < this.slides.length; i++) {
+            var slide = this.slides[i];
+            es = slide.style;
+            es.transition = es.webkitTransition = duration + "ms"
+          }
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>

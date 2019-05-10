@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+    <div id="uploadDiv" class="m-top-20"></div>
+    <div id="large-img-wrap"></div>
+</body>
+<script>
+  let options = {
+    promptFunc (msg) {
+      vm.prompt(msg)
+    },
+    successFunc (rsp) {
+      vm.uploadPage = false
+      vm.popup = false
+      let result = JSON.parse(rsp.target.responseText)
+      if (result.rspCode === '000') {
+        this.resultPage = true
+      } else {
+        vm.prompt(result.rspMsg)
+      }
+    },
+    failFunc (rsp) {
+      vm.uploadPage = false
+      vm.popup = false
+      vm.prompt('上传失败，请稍后重试')
+    },
+    maxLength: 4,
+    fileFilterFunc (f) {
+      if (!f.type.match('image.*')) {
+        vm.prompt('不支持的文件类型')
+        return false
+      }
+      if (f.size > 1024 * 1024 * 5) {
+        vm.prompt('文件太大，单张图片不可超过5M')
+        return false
+      }
+      return true
+    },
+    progressFunc (item) {
+      if (item) {
+        vm.progressInfo = item
+        if (item.progress === '100') {
+          vm.loading()
+        }
+      }
+    }
+  }
+/**
+ * fileUpload
+ * @param ele [string] [生成组件的元素的选择器]
+ * @param options [Object] [对组件设置的基本参数]
+ * options具体参数如下
+ * promptFunc(msg) 弹框回调 参数为弹框字符串 必需
+ * successFunc(res) 文件上传成功后的回调 参数为返回的文本 必需
+ * failFunc(res) 文件上传失败后的回调 参数为返回的文本 必需
+ * maxLength [number] 可上传的最大文件数量 必需
+ * fileFilterFunc(file) 文件过滤器 必需
+ * progressFunc(itme) 进度条回掉 必需
+ * @return [function] [执行图片上传的函数]
+ * 调用方法
+ * let cupdUpload = fileUpload('div', options);
+ * cupdUpload.load(url, sendData); 开始上传
+ * @param url [string] [上传URL]
+ * @param sendData [Object] [上传附带参数]
+ *
+ * cupdUpload.uploadCancel(); 取消上传
+ */
+ function fileUpload (ele, options) {
+  let click = false
+  let eleList = document.querySelectorAll(ele)
+  if (eleList.length === 0) {
+    console.log('绑定的元素不存在')
+    return
+  } else if (eleList.length > 1) {
+    console.log('请绑定唯一元素')
+    return
+  } else {
+    eleList[0].innerHTML = `<div id="img-container" >
+        <div class="img-up-add  img-item"> <span class="img-add-icon">+</span><input type="file" name="files" id="img-file-input" multiple> </div></div>'`
+    ele = eleList[0].querySelector('#img-container')
+    ele.files = []
+  }
+
+  let addBtn = document.querySelector('.img-up-add')
+  addBtn.addEventListener('click', function () {
+    document.querySelector('#img-file-input').value = null
+    return false
+  }, false)
+
+  function handleFileSelect (evt) {
+    let files = evt.target.files
+    for (let i = 0, f; f = files[i]; i++) {
+      if (!options.fileFilterFunc(f)) {
+        continue
+      } else {
+        if (ele.files.length > options.maxLength - 1) {
+          let msg = '最多只能上传' + options.maxLength + '个文件'
+          options.promptFunc(msg)
+          break
+        }
+        ele.files.push(f)
+        if (ele.files.length === options.maxLength) {
+          addBtn.style.display = 'none'
+        }
+      }
+      let reader = new FileReader()
+      reader.onload = (function (theFile) {
+        return function (e) {
+          let oDiv = document.createElement('div')
+          oDiv.className = 'img-thumb img-item'
+          oDiv.innerHTML = '<div class="thumb-icon-wrap"> <img class="thumb-icon" src="' + e.target.result + '" /> </div>' +
+                                    '<span class="img-remove">x</span>'
+          ele.insertBefore(oDiv, addBtn)
+        }
+      })(f)
+      reader.readAsDataURL(f)
+    }
+  }
+  document.querySelector('#img-file-input').addEventListener('change', handleFileSelect, false)
+
+  function getIndex (ele) {
+    if (ele && ele.nodeType && ele.nodeType === 1) {
+      let oParent = ele.parentNode
+      let oChilds = oParent.children
+      for (let i = 0; i < oChilds.length; i++) {
+        if (oChilds[i] === ele) { return i }
+      }
+    } else {
+      return -1
+    }
+  }
+  // 点击放大图片
+  function enlargeImg (evt) {
+    let icons = document.getElementsByClassName('thumb-icon')
+    let largeImgWrap = document.getElementById('large-img-wrap')
+    let bodyWidth = document.documentElement.clientWidth
+    let bodyHeight = document.documentElement.clientHeight
+    largeImgWrap.style.width = bodyWidth + 'px'
+    largeImgWrap.style.height = bodyHeight + 'px'
+
+    if (evt.target.className.match(/thumb-icon/)) {
+      let index = getIndex(evt.target.parentNode.parentNode)
+      if (click) {
+        largeImgWrap.style.display = 'none'
+        icons[index].classList.remove('fixed-top')
+        click = !click
+      } else {
+        largeImgWrap.style.display = 'block'
+        icons[index].classList.add('fixed-top')
+        let height = icons[index].offsetHeight
+        if (height < bodyHeight) {
+          icons[index].style.top = ((bodyHeight - height) / 2) + 'px'
+        }
+        click = !click
+      }
+      largeImgWrap.onclick = function () {
+        icons[index].classList.remove('fixed-top')
+        largeImgWrap.style.display = 'none'
+      }
+    }
+  }
+  console.log(ele)
+  ele.addEventListener('click', enlargeImg, false)
+
+  // 删除图片
+  function removeImg (evt) {
+    if (evt.target.className.match(/img-remove/)) {
+      // 根据索引删除指定的文件对象
+      let index = getIndex(evt.target.parentNode)
+      ele.removeChild(evt.target.parentNode)
+      if (index < 0) {
+        return
+      } else {
+        ele.files.splice(index, 1)
+      }
+      if (ele.files.length !== options.maxLength) {
+        addBtn.style.display = 'block'
+      }
+    }
+  }
+  ele.addEventListener('click', removeImg, false)
+
+  // 上传进度实现方法，上传过程中会频繁调用该方法
+  let oldTime
+  let oloaded
+  let progressBar = {
+    max: 0,
+    value: 0,
+    progress: '',
+    speed: '',
+    restTime: 0
+  }
+
+  function progressFunction (evt) {
+    if (evt.lengthComputable) { //
+      progressBar.max = evt.total // event.total是需要传输的总字节
+      progressBar.value = evt.loaded // event.loaded是已经传输的字节
+      progressBar.progress = Math.round(evt.loaded / evt.total * 100)
+    } else {
+      progressBar.max = 0
+      progressBar.value = 0
+      progressBar.progress = 0
+    }
+    // let time = document.getElementById('time')
+    let nowTime = new Date().getTime() // 获取当前时间
+    let pertime = (nowTime - oldTime) / 1000 // 计算出上次调用该方法时到现在的时间差，单位为s
+    if (pertime < 0.2 && progressBar.progress !== 100 && progressBar.progress !== 0) {
+      options.progressFunc(null)
+      return
+    }
+    oldTime = new Date().getTime()// 重新赋值时间，用于下次计算
+
+    let perload = evt.loaded - oloaded// 计算该分段上传的文件大小，单位b
+    oloaded = evt.loaded// 重新赋值已上传文件大小，用以下次计算
+
+    let speed = perload / pertime// 单位b/s
+    let bspeed = speed
+    let units = 'b/s'
+    if (speed / 1024 > 1) {
+      speed = speed / 1024
+      units = 'k/s'
+    }
+    if (speed / 1024 > 1) {
+      speed = speed / 1024
+      units = 'M/s'
+    }
+    progressBar.speed = speed.toFixed(1)
+    progressBar.units = units
+    // 剩余时间
+    progressBar.restTime = ((evt.total - evt.loaded) / bspeed).toFixed(1)
+    options.progressFunc(progressBar)
+  }
+
+  let xhr = new XMLHttpRequest()
+  // 上传图片
+  function upload (sendData, url) {
+    let formData = new FormData()
+    for (let i = 0, f; f = ele.files[i]; i++) {
+      formData.append('files', f)
+    }
+    if (sendData) {
+      formData.append('reqData', JSON.stringify(sendData))
+    } else {
+      formData.append('reqData', '')
+    }
+    xhr.upload.onprogress = progressFunction
+    xhr.onload = options.successFunc
+    xhr.onerror = options.failFunc // 请求失败
+    xhr.open('POST', url, true)
+    xhr.send(formData)
+    oldTime = new Date().getTime() // 设置上传开始时间
+    oloaded = 0// 设置上传开始时，以上传的文件大小为0
+  }
+
+  function uploadCancel () {
+    xhr.abort()
+  }
+  return {
+    upload,
+    uploadCancel
+  }
+}
+
+export default fileUpload
+
+
+
+</script>
+</html>

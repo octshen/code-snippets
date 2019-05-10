@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+    .wrap {
+      height: 40px;
+      line-height: 20px;
+      overflow: hidden;
+    }
+    .wrap .text {
+      float: right;
+      margin-left: -15px;
+      width: 100%;
+      word-break: break-all;
+      text-align: left;
+    }
+
+    .wrap::before {
+      float: left;
+      width: 15px;
+      content: '';
+      height: 40px;
+    }
+    .wrap::after {
+      float: right;
+      content: '...';
+      height: 20px;
+      line-height: 20px;
+      /* 为三个省略号的宽度 */
+      width: 3em;
+      /* 使盒子不占位置 */
+      margin-left: -3em;
+      /* 移动省略号位置 */
+      position: relative;
+      left: 100%;
+      top: -20px;
+      padding-right: 5px;
+      text-indent: 1.5em;
+      background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0),
+        white 50%,
+        white
+      );
+      background-position-x: -2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="text">
+      Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dignissimos labore sit vel itaque delectus atque quos
+      magnam assumenda quod architecto perspiciatis animi.
+    </div>
+  </div>
+</body>
+</html>
