@@ -255,4 +255,68 @@ const formatNum = function (num) {
   return arr.join('.')
 }
 
+
+// 判断浏览器类型
+export const judgeBrowser = (getPlatform = false) => {
+  const UA = navigator.userAgent
+  // 只针对移动端浏览器，不考虑桌面端
+  // safari 的话会有 qqbrowser, chrome, firefox 也包含进去，有可能还有许多其他外国浏览器和国产浏览器。。。
+  // many lowbi browsers even copy safari-version
+  const safariVersion = UA.match(/Version\/\d{1,2}\.\d/) ? UA.match(/Version\/\d{1,2}\.\d/)[0].replace('Version/', '') : 0
+  let platform
+  let browser
+  const result = []
+  if (/Android/i.test(UA)) {
+    platform = 'android'
+  }
+  if (/iPhone|iPad|iPod/i.test(UA)) {
+    platform = 'ios'
+  }
+  if (/MicroMessenger/i.test(UA)) {
+    browser = 'weixin'
+  } else if (/FxiOS/i.test(UA)) {
+    browser = 'firefox'
+  } else if (/VivoBrowser/i.test(UA)) {
+    browser = 'vivo'
+  } else if (/OppoBrowser/i.test(UA)) {
+    browser = 'oppo'
+  } else if (/(iPad|iPhone|iPod).*? (IPad)?QQ\/([\d]+)/.test(UA) || /\bV1_AND_SQI?_([\d]+)(.*? QQ\/([\d]+))?/.test(UA)) {
+    browser = 'qq'
+  } else if (/MQQBrowser/i.test(UA)) {
+    browser = 'qqbrowser'
+  } else if (/UCBrowser/i.test(UA)) {
+    browser = 'uc'
+  } else if (/Baidu/i.test(UA)) {
+    browser = 'baidu'
+  } else if (/Sogou/i.test(UA)) {
+    browser = 'sogou'
+  } else if (/QihooBrowser/i.test(UA)) {
+    browser = 'qihoo'
+  } else if (/FingerBrowser/i.test(UA)) {
+    browser = 'finger'
+  } else if (/SAMSUNG/i.test(UA)) {
+    // before chrome， 流氓的三星
+    browser = 'samsung'
+  } else if (/CriOS/i.test(UA)) {
+    // ios chrome
+    browser = 'crios'
+  } else if (/Chrome/i.test(UA)) {
+    // android chrome
+    browser = 'chrome'
+  } else if (/iPhone; CPU iPhone OS/i.test(UA) && /Mac OS X/i.test(UA) && /AppleWebKit/i.test(UA) && /Version/i.test(UA) && /Mobile/i.test(UA) && /Safari/i.test(UA)) {
+    if (safariVersion <= 8.0) { // not so sure whether to be 80
+      // 猎豹采用 Safari7.0
+      browser = 'liebao' // include lower safari
+    } else {
+      browser = 'safari'
+    }
+  } else {
+    browser = 'other'
+  }
+  result.push(browser)
+  if (getPlatform) {
+    result.push(platform)
+  }
+  return result
+}
 ```
