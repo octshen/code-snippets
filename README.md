@@ -319,4 +319,40 @@ export const judgeBrowser = (getPlatform = false) => {
   }
   return result
 }
+
+function isObject(value) {
+  const type = typeof value
+  return value != null && (type == 'object' || type == 'function')
+}
+
+/**
+ * @desc 深拷贝，结构化拷贝，支持string,number,date,reg等格式，不支持function拷贝
+ * @param {Any} obj 
+ * @param {WeakMap} hash 
+ * @return {Any}
+ */
+
+function deepClone(obj, hash = new WeakMap()) {
+  if (null == obj || "object" != typeof obj) return obj;
+  let cloneObj
+  let Constructor = obj.constructor
+  switch (Constructor) {
+    case RegExp:
+      cloneObj = new Constructor(obj)
+      break
+    case Date:
+      cloneObj = new Constructor(obj.getTime())
+      break
+    default:
+      if (hash.has(obj)) return hash.get(obj)
+      cloneObj = new Constructor()
+      console.log(cloneObj)
+      hash.set(obj, cloneObj)
+  }
+  for (let key in obj) {
+    cloneObj[key] = isObject(obj[key]) ? deepClone(obj[key], hash) : obj[key];
+  }
+  return cloneObj
+}
+
 ```
