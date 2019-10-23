@@ -355,4 +355,38 @@ function deepClone(obj, hash = new WeakMap()) {
   return cloneObj
 }
 
+function wrap(ajax) {
+  let stack = []
+  return function () {
+    let req
+    let self = this
+    let length = stack.length + 1
+    let p = new Promise((reslove, reject) => {
+      req = ajax.call(self, ...arguments).then(data => {
+        if (stack.length === length) {
+          // 最新的请求
+          stack = []
+          reslove(data)
+        } else {
+          // 如果是过期的请求就reject 或者随意
+          reject('old request')
+        }
+      })
+    })
+    stack.push(req)
+    return p
+  }
+}
+// 假定一个普通的ajax请求
+let ajax = () => {
+  return new Promise((reslove, reject) => {
+    setTimeout(() => reslove('success'), 3000)
+  })
+}
+// 封装过的特殊ajax请求
+let getSomeAjax = wrap(ajax)
+
+// 发起请求
+getSomeAjax().then(console.log, console.err)
+
 ```
