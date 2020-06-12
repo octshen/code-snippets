@@ -407,6 +407,135 @@ function convert(list) {
 	}
 	return res
 }
+export function formatInp(val, len = 3) {
+  val = val.replace(/[^\d.]/g, '') //清除“数字”和“.”以外的字符
+  val = val.replace(/\.{2,}/g, '.') //只保留第一个. 清除多余的
+  val = val
+    .replace('.', '$#$')
+    .replace(/\./g, '')
+    .replace('$#$', '.')
+  // eslint-disable-next-line prettier/prettier
+  let pattern = ''
+  eval(
+    `pattern = /^(\\d+)\\.(${Array(len) //只能输入len位小数
+      .fill('\\d')
+      .join('')}).*$/`
+  )
+  // eslint-disable-next-line no-undef
+  val = val.replace(pattern, '$1.$2')
+  return val
+}
 
+export function arraySort(arr, orders) {
+  arr.sort(function(a, b) {
+    return sortByProps(a, b, orders)
+  })
+}
+function sortByProps(a, b, orders) {
+  let cps = [] // 存储排序属性比较结果。
+  // 当return 的值大于0时当前比较的两项 交换位置 小于0不换 0不变
+  if (orders && typeof orders === 'object') {
+    for (let k in orders) {
+      let asc = orders[k] === 'asc'
+      if (a[k] > b[k]) {
+        cps.push(asc ? 1 : -1)
+        break
+      } else if (a[k] === b[k]) {
+        cps.push(0)
+      } else {
+        cps.push(asc ? -1 : 1)
+        break
+      }
+    }
+  }
+  for (let j = 0; j < cps.length; j++) {
+    if (cps[j]) {
+      return cps[j]
+    }
+  }
+  return 0
+}
+
+
+export function initChart({
+  data,
+  dataOpt = {
+    xAxis: '',
+    dataKey: {
+      y1: [],
+      y2: []
+    },
+    format: {},
+    legend: []
+  },
+  $el,
+  chartOpt
+}) {
+  dataOpt.format = dataOpt.format || {}
+  const option = deepClone(chartOpt)
+  option.legend.data = Object.values(dataOpt.legend)
+  option.xAxis.data = data.map(t => {
+    const { xAxis, format } = dataOpt
+    return format[xAxis] ? format[xAxis](t[xAxis]) : t[xAxis]
+  })
+
+  const y1Datas = dataOpt?.dataKey.y1?.map(key =>
+    data.map(t => {
+      return dataOpt.format[key] ? dataOpt.format[key](t[key]) : t[key]
+    })
+  )
+
+  const y2Datas = dataOpt?.dataKey.y2?.map(key =>
+    data.map(t => {
+      return dataOpt.format[key] ? dataOpt.format[key](t[key]) : t[key]
+    })
+  )
+  if (data.length >= 2) {
+    y1Datas && calcMaxMin(y1Datas.flat(), option, 0)
+    y2Datas && calcMaxMin(y2Datas.flat(), option, 1)
+  }
+  const allData = [...(y1Datas || []), ...(y2Datas || [])]
+  option.series.forEach((t, i) => {
+    t.data = allData[i]
+    t.name = dataOpt.legend[i]
+    option.legend.data[i] = allData[i].every(t => t === undefined)
+      ? ''
+      : option.legend.data[i]
+  })
+  const chartIns = window.echarts.init($el)
+  chartIns.setOption(option)
+  return chartIns
+}
+function calcMaxMin(data, option, ind) {
+  if (data.every(t => t === undefined)) return
+  const max = Math.max(
+    ...data.filter(t => t !== undefined).map(j => j.value || j)
+  )
+  const min = Math.min(
+    ...data.filter(t => t !== undefined).map(j => j.value || j)
+  )
+  const interval = (max - min) / 3
+  if (Math.abs(interval) > 0 && min - interval >= 0) {
+    option.yAxis[ind].min = min - interval
+    option.yAxis[ind].max = max + interval
+    option.yAxis[ind].interval = interval
+  }
+  if (Math.abs(interval) === 0) {
+    const val = max
+    option.yAxis[ind].min = 0
+    option.yAxis[ind].max = +val + val / 4
+    option.yAxis[ind].interval = val / 4
+  }
+  if (min - interval < 0) {
+    option.yAxis[ind].min = 0
+    option.yAxis[ind].max = max + max / 4
+    option.yAxis[ind].interval = max / 4
+  }
+  if (min === 0 && max === 0 && interval === 0) {
+    option.yAxis[ind].min = 0
+    option.yAxis[ind].max = 5
+    option.yAxis[ind].interval = 1
+  }
+}
 
 ```
