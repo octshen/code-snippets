@@ -392,21 +392,27 @@ getSomeAjax().then(console.log, console.err)
 
 // 数组convert
 function convert(list) {
-	const res = []
-	const map = list.reduce((res, v) => (res[v.id] = v, res), {})
-	for (const item of list) {
-		if (item.parentId === 0) {
-			res.push(item)
-			continue
-		}
-		if (item.parentId in map) {
-			const parent = map[item.parentId]
-			parent.children = parent.children || []
-			parent.children.push(item)
-		}
-	}
-	return res
+  const res = []
+  const map = list.reduce((res, v) => ((res[v.id] = v), res), {})
+  for (const item of list) {
+    if (item.parentId === 0) {
+      res.push(item)
+      continue
+    }
+    if (item.parentId in map) {
+      const parent = map[item.parentId]
+      parent.children = parent.children || []
+      parent.children.push(item)
+    }
+  }
+  return res
 }
+
+
+const pipe = (...args) => x => args.reduce((res, cb) => cb(res), x)
+
+const compose = (...args) => x => args.reduceRight((res, cb) => cb(res), x)
+
 export function formatInp(val, len = 3) {
   val = val.replace(/[^\d.]/g, '') //清除“数字”和“.”以外的字符
   val = val.replace(/\.{2,}/g, '.') //只保留第一个. 清除多余的
