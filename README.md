@@ -462,6 +462,25 @@ function sortByProps(a, b, orders) {
   return 0
 }
 
+function createFlow(handlers) {
+  return {
+    effects: handlers.map(item => item.effects ? item.effects : item).flat(Infinity),
+    results: [],
+    async *[Symbol.asyncIterator]() {
+      for (let func of this.effects) {
+        const res=  await func()
+        yield res
+      }
+    },
+    async run (cb) {
+      console.log(this)
+      for await (let res of this) {
+        this.results.push(res)
+      }
+      cb && cb(this.results)
+    }
+  }
+}
 
 export function initChart({
   data,
