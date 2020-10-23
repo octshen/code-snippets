@@ -562,5 +562,15 @@ function calcMaxMin(data, option, ind) {
     option.yAxis[ind].interval = 1
   }
 }
+// 转换当前时间到其他时区时间 
+// offset 第几时区
+function convertZoneTime(offset = 0) {
+  let d = new Date()
+  let localTime = d.getTime()
+  let localOffset = d.getTimezoneOffset() * 60000
+  let utc = localTime + localOffset
+  let time = utc + 3600000 * offset
+  return new Date(korean)
+}
 
 ```
